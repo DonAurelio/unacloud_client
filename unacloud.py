@@ -1,4 +1,4 @@
-#!/bin/python
+#!.env/bin/python
 import click
 import requests
 import os
