@@ -93,7 +93,7 @@ def ssh_environment(name):
         port = environment[0].get('ssh_port')
 
         if address and port:
-            command = 'ssh -p %s unacloud@%s' % (address,port)
+            command = 'ssh -p %s unacloud@%s' % (port,address)
             os.system(command)
         else:
             click.echo("the environment does not have 'address' and 'port to ssh'")
@@ -119,8 +119,13 @@ def get_actions():
     return actions
 
 def echo_as_table(data,headers):
-    df = pd.DataFrame(data)
-    print(df[headers].to_string(index=False,justify='left'))
+    if data:
+        df = pd.DataFrame(data)
+        print(df[headers].to_string(index=False,justify='left'))
+    else:
+        df = pd.DataFrame(columns=headers)
+        print(df.to_string(index=False,justify='left'))
+
 
 @click.group()
 def unacloud():
@@ -185,6 +190,7 @@ def environment_start(name):
     start_environment(name)
 
 @environment.command(name='stop')
+@click.argument('name')
 def environment_stop(name):
     """
     Sends the stop signal to an enviroment with the given name.
@@ -192,13 +198,15 @@ def environment_stop(name):
     stop_environment(name)
 
 @environment.command(name='reset')
+@click.argument('name')
 def environment_reset(name):
     """
     Sends the reset signal to an enviroment with the given name.
     """
-    stop_environment(name)
+    reset_environment(name)
 
 @environment.command(name='delete')
+@click.argument('name')
 def environment_delete(name):
     """
     Sends the delete signal to an enviroment with the given name.
@@ -206,7 +214,8 @@ def environment_delete(name):
     delete_environment(name)
 
 @environment.command(name='ssh')
-def environment_ssh():
+@click.argument('name')
+def environment_ssh(name):
     """
     Establish ssh connection to an enviroment.
     """
