@@ -1,13 +1,13 @@
 #!/bin/python
 import click
 import requests
+import pandas as pd
 
 
 # API SERVER URL
 API_SERVER_BASE_URL = 'http://localhost:8081/api'
 
 def get_url(endpoint,query=''):
-    endpoint = '/environment/deployments'
     url = API_SERVER_BASE_URL + endpoint + ''
     return url
 
@@ -31,19 +31,21 @@ def get_deployments():
     deployments = get_request(endpoint='/environment/deployments')
     return deployments
 
-def echo_as_table(data,*headers):
-    lower_headers = list(map(lambda x:x.lower(),headers))
-    header_format = "{:<20} " * len(lower_headers)
-    header_str = header_format.format(*headers)
+def get_environments():
+    environments = get_request(endpoint='/environment/environments')
+    return environments
 
-    # Print header
-    click.echo(header_str)
+def get_workers():
+    workers = get_request(endpoint='/worker/workers')
+    return workers
 
-    for datum in data:
-        # Reordering data to match the headers positions
-        reordered = {k: datum[k] for k in lower_headers}
-        values = reordered.values()
-        click.echo(header_format.format(*values))
+def get_actions():
+    actions = get_request(endpoint='/environment/actions')
+    return actions
+
+def echo_as_table(data,headers):
+    df = pd.DataFrame(data)
+    print(df[headers].to_string(index=False,justify='left'))
 
 @click.group()
 def unacloud():
@@ -56,17 +58,42 @@ def deployment():
 @deployment.command(name='list')
 def deployment_list():
     deployments = get_deployments()
+    headers = ['id','environment_name','status','detail']
+    echo_as_table(deployments,headers)
 
-    headers = ['ID','ENVIRONMENT_NAME','STATUS','DETAIL']
-    echo_as_table(deployments,*headers)
-
-@unacloud.command()
-def environmet():
+@unacloud.group()
+def environment():
     pass
 
-@unacloud.command()
+@environment.command(name='list')
+def environment_list():
+    environmets = get_environments()
+    headers = [
+        'id','name','provider','address','ssh_port',
+        'cores','memory','status','worker_id'
+    ]
+    echo_as_table(environmets,headers)
+
+@unacloud.group()
+def worker():
+    pass
+
+@worker.command(name='list')
+def worker_list():
+    workers = get_workers()
+    headers = ['id','address','cpus','memory','last_health_report_date']
+    echo_as_table(workers,headers)
+
+@unacloud.group()
 def action():
     pass
+
+@action.command(name='list')
+def action_list():
+    actions = get_actions()
+    headers = ['id','action','environment_name','status','detail']
+    echo_as_table(actions,headers)
+
 
 if __name__ == '__main__':
     unacloud()
