@@ -124,24 +124,40 @@ def echo_as_table(data,headers):
 
 @click.group()
 def unacloud():
+    """
+    UnaCloud 3 (Prototipe) opportunistic infraesture provides execution 
+    environments for scientific computing.
+    """
     pass
 
 @unacloud.group()
 def deployment():
+    """
+    Environments deployments information.
+    """
     pass
 
 @deployment.command(name='list')
 def deployment_list():
+    """
+    Lists deployements.
+    """
     deployments = get_deployments()
     headers = ['id','environment_name','status','detail']
     echo_as_table(deployments,headers)
 
 @unacloud.group()
 def environment():
+    """
+    Enviroments management.   
+    """
     pass
 
 @environment.command(name='list')
 def environment_list():
+    """
+    Lists created environments.
+    """
     environmets = get_environments()
     headers = [
         'id','name','provider','address','ssh_port',
@@ -155,45 +171,75 @@ def environment_list():
 @click.option('--cpus', default=2, help='number of cpus for the environment')
 @click.option('--memory', default=2048, help='RAM memory in MB')
 def environment_create(name,provider,cpus,memory):
+    """
+    Creates and environment with a given name.
+    """
     create_environment(name,provider,cpus,memory)
 
 @environment.command(name='start')
 @click.argument('name')
 def environment_start(name):
+    """
+    Sends the start signal to an enviroment with the given name.
+    """
     start_environment(name)
 
 @environment.command(name='stop')
 def environment_stop(name):
+    """
+    Sends the stop signal to an enviroment with the given name.
+    """
     stop_environment(name)
 
 @environment.command(name='reset')
 def environment_reset(name):
+    """
+    Sends the reset signal to an enviroment with the given name.
+    """
     stop_environment(name)
 
 @environment.command(name='delete')
 def environment_delete(name):
+    """
+    Sends the delete signal to an enviroment with the given name.
+    """
     delete_environment(name)
 
 @environment.command(name='ssh')
 def environment_ssh():
+    """
+    Establish ssh connection to an enviroment.
+    """
     ssh_environment(name)
 
 @unacloud.group()
 def worker():
+    """
+    Workers registered on UnaCloud.
+    """
     pass
 
 @worker.command(name='list')
 def worker_list():
+    """
+    Lists registered workers.
+    """
     workers = get_workers()
     headers = ['id','address','cpus','memory','last_health_report_date']
     echo_as_table(workers,headers)
 
 @unacloud.group()
 def action():
+    """
+    Actions performed over environments.
+    """
     pass
 
 @action.command(name='list')
 def action_list():
+    """
+    Lists all actions performed over the environments.
+    """
     actions = get_actions()
     headers = ['id','action','environment_name','status','detail']
     echo_as_table(actions,headers)
