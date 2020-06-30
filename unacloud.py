@@ -1,6 +1,7 @@
 #!/bin/python
 import click
 import requests
+import os
 import pandas as pd
 
 
@@ -26,6 +27,80 @@ def get_request(endpoint,query=''):
         click.echo(message,err=True)
 
     return data
+
+def post_request(data,endpoint,query=''):
+    url = get_url(endpoint=endpoint)
+
+    try:
+        response = requests.post(url,json=data)
+        response.raise_for_status()
+        data = response.json()
+        message = data.get('message')
+        click.echo(message)
+    except requests.exceptions.ConnectionError as e:
+        message = click.style(
+            "API Server not available at: {}", fg="red"
+        ).format(url)
+        click.echo(message,err=True)
+
+    except Exception as e:
+        message = click.style(str(e),fg="red")
+        click.echo(message,err=True)
+
+def create_environment(name,provider,cpus,memory):
+    data = {
+        'name': name,
+        'provider': provider,
+        'cpus': cpus,
+        'memory': memory
+    }
+    post_request(data=data,endpoint='/environment/create/')
+
+def start_environment(name):
+    data = {
+        'environment_name': name,
+        'action': 'start',
+    }
+    post_request(data=data,endpoint='/environment/action/')
+
+def stop_environment(name):
+    data = {
+        'environment_name': name,
+        'action': 'stop',
+    }
+    post_request(data=data,endpoint='/environment/action/')
+
+def reset_environment(name):
+    data = {
+        'environment_name': name,
+        'action': 'reset',
+    }
+    post_request(data=data,endpoint='/environment/action/')
+
+def delete_environment(name):
+    data = {
+        'environment_name': name,
+        'action': 'delete',
+    }
+    post_request(data=data,endpoint='/environment/action/')
+
+def ssh_environment(name):
+    endpoint = '/environment/environments/?name=%s' % name
+    environment = get_request(endpoint=endpoint)
+
+    if environment:
+        address = environment[0].get('address')
+        port = environment[0].get('ssh_port')
+
+        if address and port:
+            command = 'ssh -p %s unacloud@%s' % (address,port)
+            os.system(command)
+        else:
+            click.echo("the environment does not have 'address' and 'port to ssh'")
+            click.echo("probable the environment is not deployed yet")
+
+    else:
+        click.echo("environment '%s' not found !!" % name)
 
 def get_deployments():
     deployments = get_request(endpoint='/environment/deployments')
@@ -73,6 +148,35 @@ def environment_list():
         'cores','memory','status','worker_id'
     ]
     echo_as_table(environmets,headers)
+
+@environment.command(name='create')
+@click.argument('name')
+@click.option('--provider', default='virtualbox', help='environment virtualization provider')
+@click.option('--cpus', default=2, help='number of cpus for the environment')
+@click.option('--memory', default=2048, help='RAM memory in MB')
+def environment_create(name,provider,cpus,memory):
+    create_environment(name,provider,cpus,memory)
+
+@environment.command(name='start')
+@click.argument('name')
+def environment_start(name):
+    start_environment(name)
+
+@environment.command(name='stop')
+def environment_stop(name):
+    stop_environment(name)
+
+@environment.command(name='reset')
+def environment_reset(name):
+    stop_environment(name)
+
+@environment.command(name='delete')
+def environment_delete(name):
+    delete_environment(name)
+
+@environment.command(name='ssh')
+def environment_ssh():
+    ssh_environment(name)
 
 @unacloud.group()
 def worker():
