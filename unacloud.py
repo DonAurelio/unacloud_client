@@ -87,7 +87,7 @@ def delete_environment(name):
 def ssh_environment(name):
     endpoint = '/environment/environments/?name=%s' % name
     environment = get_request(endpoint=endpoint)
-
+    print('ENVIROMENT:', environment)
     if environment:
         address = environment[0].get('address')
         port = environment[0].get('ssh_port')
